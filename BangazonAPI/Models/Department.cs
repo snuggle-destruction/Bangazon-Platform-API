@@ -14,6 +14,6 @@ namespace BangazonAPI.Models
         public string Name { get; set; }
 
         [Required]
-        public decimal Budget { get; set; }
+        public int Budget { get; set; }
     }
 }
