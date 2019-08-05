@@ -163,11 +163,11 @@ namespace BangazonAPI.Controllers
             }
         }
 
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-        }
+        //// DELETE api/values/5
+        //[HttpDelete("{id}")]
+        //public async Task<IActionResult> Delete(int id)
+        //{
+        //}
 
         private bool CustomerExists(int id)
         {
