@@ -13,11 +13,11 @@ namespace BangazonAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductsController : ControllerBase
+    public class PaymentTypesController : ControllerBase
     {
         private readonly IConfiguration _config;
 
-        public ProductsController(IConfiguration config)
+        public PaymentTypesController(IConfiguration config)
         {
             _config = config;
         }
@@ -39,30 +39,25 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT * FROM Product;";
+                    cmd.CommandText = "SELECT * FROM ProductType;";
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
-                    List<PaymentType> products = new List<PaymentType>();
+                    List<PaymentType> paymentTypes = new List<PaymentType>();
                     while (reader.Read())
                     {
-                        PaymentType product = new PaymentType
+                        PaymentType paymentType = new PaymentType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Title = reader.GetString(reader.GetOrdinal("Title")),
-                            Description = reader.GetString(reader.GetOrdinal("Description")),
-                            Price = reader.GetDecimal(reader.GetOrdinal("Price")),
-                            Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
-                            ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
-                            CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId"))
+                            
                             // You might have more columns
                         };
 
-                        products.Add(product);
+                        paymentTypes.Add(paymentType);
                     }
 
                     reader.Close();
 
-                    return Ok(products);
+                    return Ok(paymentTypes);
                 }
             }
         }
@@ -80,10 +75,10 @@ namespace BangazonAPI.Controllers
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
-                    PaymentType product = null;
+                    PaymentType productType = null;
                     if (reader.Read())
                     {
-                        product = new PaymentType
+                        productType = new PaymentType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
@@ -98,14 +93,14 @@ namespace BangazonAPI.Controllers
 
                     reader.Close();
 
-                    return Ok(product);
+                    return Ok(productType);
                 }
             }
         }
 
         // POST api/values
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] PaymentType product)
+        public async Task<IActionResult> Post([FromBody] PaymentType productType)
         {
             using (SqlConnection conn = Connection)
             {
@@ -118,23 +113,23 @@ namespace BangazonAPI.Controllers
                         OUTPUT INSERTED.Id
                         VALUES (@productTypeId, @customerId, @price, @title, @description, @quantity);
                     ";
-                    cmd.Parameters.Add(new SqlParameter("@productTypeId", product.ProductTypeId));
-                    cmd.Parameters.Add(new SqlParameter("@customerId", product.CustomerId));
-                    cmd.Parameters.Add(new SqlParameter("@price", product.Price));
-                    cmd.Parameters.Add(new SqlParameter("@title", product.Title));
-                    cmd.Parameters.Add(new SqlParameter("@description", product.Description));
-                    cmd.Parameters.Add(new SqlParameter("@quantity", product.Quantity));
+                    cmd.Parameters.Add(new SqlParameter("@productTypeId", productType.ProductTypeId));
+                    cmd.Parameters.Add(new SqlParameter("@customerId", productType.CustomerId));
+                    cmd.Parameters.Add(new SqlParameter("@price", productType.Price));
+                    cmd.Parameters.Add(new SqlParameter("@title", productType.Title));
+                    cmd.Parameters.Add(new SqlParameter("@description", productType.Description));
+                    cmd.Parameters.Add(new SqlParameter("@quantity", productType.Quantity));
 
-                    product.Id = (int)await cmd.ExecuteScalarAsync();
+                    productType.Id = (int)await cmd.ExecuteScalarAsync();
 
-                    return CreatedAtRoute("GetProduct", new { id = product.Id }, product);
+                    return CreatedAtRoute("GetProduct", new { id = productType.Id }, productType);
                 }
             }
         }
 
         // PUT api/values/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] PaymentType product)
+        public async Task<IActionResult> Put(int id, [FromBody] PaymentType productType)
         {
             try
             {
@@ -153,13 +148,13 @@ namespace BangazonAPI.Controllers
                             SET Quantity = @quantity
                             WHERE Id = @id
                         ";
-                        cmd.Parameters.Add(new SqlParameter("@id", product.Id));
-                        cmd.Parameters.Add(new SqlParameter("@productTypeId", product.ProductTypeId));
-                        cmd.Parameters.Add(new SqlParameter("@customerId", product.CustomerId));
-                        cmd.Parameters.Add(new SqlParameter("@price", product.Price));
-                        cmd.Parameters.Add(new SqlParameter("@title", product.Title));
-                        cmd.Parameters.Add(new SqlParameter("@description", product.Description));
-                        cmd.Parameters.Add(new SqlParameter("@quantity", product.Quantity));
+                        cmd.Parameters.Add(new SqlParameter("@id", productType.Id));
+                        cmd.Parameters.Add(new SqlParameter("@productTypeId", productType.ProductTypeId));
+                        cmd.Parameters.Add(new SqlParameter("@customerId", productType.CustomerId));
+                        cmd.Parameters.Add(new SqlParameter("@price", productType.Price));
+                        cmd.Parameters.Add(new SqlParameter("@title", productType.Title));
+                        cmd.Parameters.Add(new SqlParameter("@description", productType.Description));
+                        cmd.Parameters.Add(new SqlParameter("@quantity", productType.Quantity));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 

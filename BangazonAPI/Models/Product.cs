@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace BangazonAPI.Models
 {
-    public class Product
+    public class PaymentType
     {
         public int Id { get; set; }
         public int ProductTypeId { get; set; }
