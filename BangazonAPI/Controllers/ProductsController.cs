@@ -42,10 +42,10 @@ namespace BangazonAPI.Controllers
                     cmd.CommandText = "SELECT * FROM Product;";
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
-                    List<PaymentType> products = new List<PaymentType>();
+                    List<Product> products = new List<Product>();
                     while (reader.Read())
                     {
-                        PaymentType product = new PaymentType
+                        Product product = new Product
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
@@ -80,10 +80,10 @@ namespace BangazonAPI.Controllers
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
-                    PaymentType product = null;
+                    Product product = null;
                     if (reader.Read())
                     {
-                        product = new PaymentType
+                        product = new Product
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
@@ -105,7 +105,7 @@ namespace BangazonAPI.Controllers
 
         // POST api/values
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] PaymentType product)
+        public async Task<IActionResult> Post([FromBody] Product product)
         {
             using (SqlConnection conn = Connection)
             {
@@ -134,7 +134,7 @@ namespace BangazonAPI.Controllers
 
         // PUT api/values/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] PaymentType product)
+        public async Task<IActionResult> Put(int id, [FromBody] Product product)
         {
             try
             {
