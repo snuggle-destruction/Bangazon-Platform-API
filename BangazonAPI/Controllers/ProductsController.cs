@@ -50,6 +50,10 @@ namespace BangazonAPI.Controllers
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
                             Description = reader.GetString(reader.GetOrdinal("Description")),
+                            Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                            Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                            ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
+                            CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId"))
                             // You might have more columns
                         };
 
@@ -72,7 +76,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "Write your SQL statement here to get a single customer";
+                    cmd.CommandText = @"SELECT * FROM Product WHERE id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
@@ -84,6 +88,10 @@ namespace BangazonAPI.Controllers
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
                             Description = reader.GetString(reader.GetOrdinal("Description")),
+                            Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                            Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
+                            ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
+                            CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId"))
                             // You might have more columns
                         };
                     }
@@ -106,11 +114,16 @@ namespace BangazonAPI.Controllers
                 {
                     // More string interpolation
                     cmd.CommandText = @"
-                        INSERT INTO Product ()
+                        INSERT INTO Product (ProductTypeId, CustomerId, Price, Title, Description, Quantity)
                         OUTPUT INSERTED.Id
-                        VALUES ()
+                        VALUES (@productTypeId, @customerId, @price, @title, @description, @quantity);
                     ";
-                    cmd.Parameters.Add(new SqlParameter("@Id", product.Id));
+                    cmd.Parameters.Add(new SqlParameter("@productTypeId", product.ProductTypeId));
+                    cmd.Parameters.Add(new SqlParameter("@customerId", product.CustomerId));
+                    cmd.Parameters.Add(new SqlParameter("@price", product.Price));
+                    cmd.Parameters.Add(new SqlParameter("@title", product.Title));
+                    cmd.Parameters.Add(new SqlParameter("@description", product.Description));
+                    cmd.Parameters.Add(new SqlParameter("@quantity", product.Quantity));
 
                     product.Id = (int)await cmd.ExecuteScalarAsync();
 
@@ -132,12 +145,21 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE Product
-                            SET Title = @Title
-                            -- Set the remaining columns here
+                            SET ProductTypeId = @productTypeId
+                            SET CustomerId = @customerId
+                            SET Price = @price
+                            SET Title = @title
+                            SET Description = @description
+                            SET Quantity = @quantity
                             WHERE Id = @id
                         ";
                         cmd.Parameters.Add(new SqlParameter("@id", product.Id));
-                        cmd.Parameters.Add(new SqlParameter("@Title", product.Title));
+                        cmd.Parameters.Add(new SqlParameter("@productTypeId", product.ProductTypeId));
+                        cmd.Parameters.Add(new SqlParameter("@customerId", product.CustomerId));
+                        cmd.Parameters.Add(new SqlParameter("@price", product.Price));
+                        cmd.Parameters.Add(new SqlParameter("@title", product.Title));
+                        cmd.Parameters.Add(new SqlParameter("@description", product.Description));
+                        cmd.Parameters.Add(new SqlParameter("@quantity", product.Quantity));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
@@ -152,7 +174,7 @@ namespace BangazonAPI.Controllers
             }
             catch (Exception)
             {
-                if (!CustomerExists(id))
+                if (!ProductExists(id))
                 {
                     return NotFound();
                 }
@@ -167,10 +189,39 @@ namespace BangazonAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            return null;
+            try
+            {
+                using (SqlConnection conn = Connection)
+                {
+                    conn.Open();
+                    using (SqlCommand cmd = conn.CreateCommand())
+                    {
+                        cmd.CommandText = @"DELETE FROM Product WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
+
+                        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                        if (rowsAffected > 0)
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        throw new Exception("No rows affected");
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                if (!ProductExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
-        private bool CustomerExists(int id)
+        private bool ProductExists(int id)
         {
             using (SqlConnection conn = Connection)
             {
