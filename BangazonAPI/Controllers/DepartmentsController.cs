@@ -32,7 +32,7 @@ namespace BangazonAPI.Controllers
 
         // GET api/values
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string _include)
+        public async Task<IActionResult> Get([FromQuery] string _include, string _filter, int? _gt)
         {
             string SqlCommandText = @"SELECT d.Id as DepartmentId, d.Name, d.Budget
                                 FROM Department d";
@@ -44,6 +44,10 @@ namespace BangazonAPI.Controllers
                                 FROM Department d
                                 LEFT JOIN Employee e ON d.ID = e.DepartmentId";
             }
+            if (_filter == "budget" && _gt != null)
+            {
+                SqlCommandText = $"{SqlCommandText} WHERE d.Budget >= @gt";
+            }
 
             using (SqlConnection conn = Connection)
             {
@@ -51,6 +55,12 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = SqlCommandText;
+
+                    if (_filter == "budget" && _gt != null)
+                    {
+                        cmd.Parameters.Add(new SqlParameter("@gt", _gt));
+
+                    }
 
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
