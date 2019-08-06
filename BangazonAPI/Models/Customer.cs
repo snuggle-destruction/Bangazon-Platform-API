@@ -14,5 +14,9 @@ namespace BangazonAPI.Models
         public string LastName { get; set; }
         public DataType DateCreated { get; set; }
         public bool IsActive { get; set; }
+        public List<Product> Products { get; set; }
+        public List<PaymentType> PaymentTypes { get; set; }
+
+
     }
 }
