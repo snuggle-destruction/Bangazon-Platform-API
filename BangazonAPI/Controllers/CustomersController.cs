@@ -254,9 +254,7 @@ namespace BangazonAPI.Controllers
                             }
                         }
                     };
-
                     reader.Close();
-
                     return Ok(customer);
                 }
             }
