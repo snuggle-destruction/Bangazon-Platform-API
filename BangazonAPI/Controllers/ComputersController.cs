@@ -9,8 +9,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
-
-
 namespace BangazonAPI.Controllers
 {
     [Route("api/[controller]")]
@@ -115,17 +113,29 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     // More string interpolation
-                    cmd.CommandText = @"INSERT INTO Computer (PurchaseDate, DecomissionDate, Make, Manufacturer)
-                                        OUTPUT INSERTED.Id
-                                        VALUES (@purchaseDate, @decomissionDate, @make, @manufacturer)";
+                    cmd.CommandText = @"DECLARE @ComputerTemp TABLE (Id int);
+
+                                        INSERT INTO Computer (PurchaseDate, DecomissionDate, Make, Manufacturer)
+                                        OUTPUT INSERTED.Id INTO @ComputerTemp(Id)
+                                        VALUES (@purchaseDate, @decomissionDate, @make, @manufacturer)
+
+                                        SELECT TOP 1 @ID = Id FROM @ComputerTemp";
+
+                    SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
+                    outputParam.Direction = ParameterDirection.Output;
+
                     cmd.Parameters.Add(new SqlParameter("@purchaseDate", computer.PurchaseDate));
                     cmd.Parameters.Add(new SqlParameter("@decomissionDate", computer.DecomissionDate));
                     cmd.Parameters.Add(new SqlParameter("@make", computer.Make));
                     cmd.Parameters.Add(new SqlParameter("@manufacturer", computer.Manufacturer));
 
-                    computer.Id = (int)await cmd.ExecuteScalarAsync();
+                    cmd.ExecuteNonQuery();
 
-                    return CreatedAtRoute("GetEmployee", new { id = computer.Id }, computer);
+                    var newComputerId = (int)outputParam.Value;
+                    computer.Id = newComputerId;
+
+
+                    return Ok(computer);
                 }
             }
         }
@@ -157,11 +167,11 @@ namespace BangazonAPI.Controllers
 
                         if (rowsAffected > 0)
                         {
-                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                            return Ok();
                         }
                         else
                         {
-                            return Ok();
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
 
                         throw new Exception("No rows affected");
@@ -198,11 +208,11 @@ namespace BangazonAPI.Controllers
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
                         {
-                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                            return Ok();
                         }
                         else
                         {
-                            return Ok();
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
 
                         throw new Exception("No rows affected");

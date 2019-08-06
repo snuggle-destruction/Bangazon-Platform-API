@@ -11,10 +11,10 @@ using System.Text;
 
 namespace TestBangazonAPI
 {
-    public class TestEmployees
+    public class TestComputers
     {
         [Fact]
-        public async Task Test_Get_All_Employees()
+        public async Task Test_Get_All_Computers()
         {
             using (var client = new APIClientProvider().Client)
             {
@@ -26,22 +26,22 @@ namespace TestBangazonAPI
                 /*
                     ACT
                 */
-                var response = await client.GetAsync("/api/employees");
+                var response = await client.GetAsync("/api/computers");
 
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var employees = JsonConvert.DeserializeObject<List<Employee>>(responseBody);
+                var computers = JsonConvert.DeserializeObject<List<Computer>>(responseBody);
 
                 /*
                     ASSERT
                 */
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.True(employees.Count > 0);
+                Assert.True(computers.Count > 0);
             }
         }
 
         [Fact]
-        public async Task Test_Get_One_Employee()
+        public async Task Test_Get_One_Computer()
         {
             using (var client = new APIClientProvider().Client)
             {
@@ -53,67 +53,68 @@ namespace TestBangazonAPI
                 /*
                     ACT
                 */
-                var responseWithAllEmployees = await client.GetAsync("/api/employees");
+                var responseWithAllComputers = await client.GetAsync("/api/computers");
 
 
-                string responseBodyWithAllEmployees = await responseWithAllEmployees.Content.ReadAsStringAsync();
-                var allemployees = JsonConvert.DeserializeObject<List<Employee>>(responseBodyWithAllEmployees);
+                string responseBodyWithAllComputers = await responseWithAllComputers.Content.ReadAsStringAsync();
+                var allComputers = JsonConvert.DeserializeObject<List<Employee>>(responseBodyWithAllComputers);
 
 
-                var response = await client.GetAsync("/api/employees/" + allemployees.First().Id);
+                var response = await client.GetAsync("/api/computers/" + allComputers.First().Id);
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var employee = JsonConvert.DeserializeObject<Employee>(responseBody);
+                var computer = JsonConvert.DeserializeObject<Computer>(responseBody);
 
                 /*
                     ASSERT
                 */
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.True(employee.Id > 0);
+                Assert.True(computer.Id > 0);
             }
         }
 
         [Fact]
-        public async Task Test_Add_One_Employee()
+        public async Task Test_Add_One_Computer()
         {
             using (var client = new APIClientProvider().Client)
             {
                 /*
                     ARRANGE
                 */
+                var nowDate = DateTime.Now;
 
-                var newEmployee = new Employee
+                var newComputer = new Computer
                 {
-                    FirstName = "Someguy",
-                    LastName = "Fred",
-                    IsSupervisor = false,
-                    DepartmentId = 1
+                    PurchaseDate = nowDate.AddDays(-10),
+                    DecomissionDate = nowDate,
+                    Make = "Craptastic 3000",
+                    Manufacturer = "Dell"
                 };
 
-                var newEmployeeAsJSON = JsonConvert.SerializeObject(newEmployee);
+                var newComputerAsJSON = JsonConvert.SerializeObject(newComputer);
 
                 /*
                     ACT
                 */
                 var response = await client.PostAsync(
-                    "/api/employees",
-                    new StringContent(newEmployeeAsJSON, Encoding.UTF8, "application/json")
+                    "/api/computers",
+                    new StringContent(newComputerAsJSON, Encoding.UTF8, "application/json")
                 );
 
                 string responseBody = await response.Content.ReadAsStringAsync();
 
-                var newEmployeeReturned = JsonConvert.DeserializeObject<Employee>(responseBody);
+                var newComputerReturned = JsonConvert.DeserializeObject<Computer>(responseBody);
 
                 /*
                     ASSERT
                 */
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.True(newEmployeeReturned.Id > 0);
+                Assert.True(newComputerReturned.Id > 0);
             }
         }
 
         [Fact]
-        public async Task Test_Update_One_Employee()
+        public async Task Test_Update_One_Computer()
         {
             using (var client = new APIClientProvider().Client)
             {
@@ -121,24 +122,26 @@ namespace TestBangazonAPI
                     ARRANGE
                 */
 
-                string newName = "Tobey";
+                string newMake = "Crappy Craptastic 3001";
 
-                var newEmployee = new Employee
+                var nowDate = DateTime.Now;
+
+                var newComputer = new Computer
                 {
-                    FirstName = "Someguy",
-                    LastName = newName,
-                    IsSupervisor = false,
-                    DepartmentId = 1
+                    PurchaseDate = nowDate.AddDays(-10),
+                    DecomissionDate = nowDate,
+                    Make = newMake,
+                    Manufacturer = "Dell"
                 };
 
-                var newEmployeeAsJSON = JsonConvert.SerializeObject(newEmployee);
+                var newComputerAsJSON = JsonConvert.SerializeObject(newComputer);
 
                 /*
                     ACT
                 */
                 var response = await client.PutAsync(
-                    "/api/employees/5",
-                    new StringContent(newEmployeeAsJSON, Encoding.UTF8, "application/json")
+                    "/api/computers/5",
+                    new StringContent(newComputerAsJSON, Encoding.UTF8, "application/json")
                 );
 
                 /*
@@ -149,7 +152,7 @@ namespace TestBangazonAPI
         }
 
         [Fact]
-        public async Task Test_Delete_One_Employee()
+        public async Task Test_Delete_One_Computer()
         {
             using (var client = new APIClientProvider().Client)
             {
@@ -161,7 +164,7 @@ namespace TestBangazonAPI
                     ACT
                 */
                 var response = await client.DeleteAsync(
-                    "/api/employees/8"
+                    "/api/computers/8"
                 );
 
                 /*
