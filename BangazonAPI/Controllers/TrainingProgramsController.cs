@@ -31,16 +31,24 @@ namespace BangazonAPI.Controllers
 
         // GET api/values
         [HttpGet]
-        public async Task<IActionResult> Get([FromRoute] bool completed)
+        public async Task<IActionResult> Get([FromQuery] string completed)
         {
+            string SqlCommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees, e.FirstName, e.LastName FROM TrainingProgram tp
+                                        JOIN EmployeeTraining et ON et.TrainingProgramId = tp.id
+                                        JOIN Employee e ON e.Id = et.EmployeeId;";
+            if (completed == "false")
+            {
+                SqlCommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees, e.FirstName, e.LastName FROM TrainingProgram tp
+                                        JOIN EmployeeTraining et ON et.TrainingProgramId = tp.id
+                                        JOIN Employee e ON e.Id = et.EmployeeId
+                                        WHERE tp.EndDate > CURRENT_TIMESTAMP;";
+            }
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees, e.FirstName, e.LastName FROM TrainingProgram tp
-                                        JOIN EmployeeTraining et ON et.TrainingProgramId = tp.id
-                                        JOIN Employee e ON e.Id = et.EmployeeId";
+                    cmd.CommandText = SqlCommandText;
 
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
