@@ -104,7 +104,7 @@ namespace BangazonAPI.Controllers
                 {
                     // More string interpolation
                     cmd.CommandText = @"
-                        INSERT INTO Order (CustomerId, PaymentTypeId)
+                        INSERT INTO [Order] (CustomerId, PaymentTypeId)
                         OUTPUT INSERTED.Id
                         VALUES (@customerId, @paymentTypeId)
                     ";
@@ -133,7 +133,6 @@ namespace BangazonAPI.Controllers
                             UPDATE Order
                             SET CustomerId = @customerId,
                                 PaymentTypeId = @paymentTypeId
-                            -- Set the remaining columns here
                             WHERE Id = @id
                         ";
                         cmd.Parameters.Add(new SqlParameter("@id", order.Id));
