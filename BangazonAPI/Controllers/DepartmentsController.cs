@@ -39,7 +39,7 @@ namespace BangazonAPI.Controllers
 
             if (_include == "employees")
             {
-                SqlCommandText = @"SELECT d.Id as DepartmentId, d.Name, d.Budget
+                SqlCommandText = @"SELECT d.Id as DepartmentId, d.Name, d.Budget,
                                 e.Id as EmployeeId, e.FirstName, e.LastName, e.IsSupervisor, e.DepartmentId
                                 FROM Department d
                                 LEFT JOIN Employee e ON d.ID = e.DepartmentId";
@@ -50,6 +50,8 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
+                    cmd.CommandText = SqlCommandText;
+
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                     List<Department> departments = new List<Department>();
@@ -57,7 +59,7 @@ namespace BangazonAPI.Controllers
                     {
                         Department department = new Department
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Id = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
                         };
@@ -67,7 +69,7 @@ namespace BangazonAPI.Controllers
                             Employee employee = new Employee();
                             if (!reader.IsDBNull(reader.GetOrdinal("EmployeeId")))
                             {
-                                employee.Id = reader.GetInt32(reader.GetOrdinal("Id"));
+                                employee.Id = reader.GetInt32(reader.GetOrdinal("EmployeeId"));
                                 employee.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
                                 employee.LastName = reader.GetString(reader.GetOrdinal("LastName"));
                                 employee.IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor"));
@@ -89,7 +91,17 @@ namespace BangazonAPI.Controllers
                                 departments.Add(department);
                             }
                         }
-
+                        else
+                        {
+                            if (departments.Any(d => d.Id == department.Id))
+                            {
+                                Department existingDepartment = departments.Find(d => d.Id == department.Id);
+                            }
+                            else
+                            {
+                                departments.Add(department);
+                            }
+                        }
                     }
 
                     reader.Close();
