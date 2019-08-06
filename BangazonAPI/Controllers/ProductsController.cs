@@ -50,7 +50,7 @@ namespace BangazonAPI.Controllers
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
                             Description = reader.GetString(reader.GetOrdinal("Description")),
-                            Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                            Price = reader.GetSqlMoney(reader.GetOrdinal("Price")).ToDecimal(),
                             Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
                             ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
                             CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId"))
@@ -88,7 +88,7 @@ namespace BangazonAPI.Controllers
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
                             Title = reader.GetString(reader.GetOrdinal("Title")),
                             Description = reader.GetString(reader.GetOrdinal("Description")),
-                            Price = reader.GetDecimal(reader.GetOrdinal("Price")),
+                            Price = reader.GetSqlMoney(reader.GetOrdinal("Price")).ToDecimal(),
                             Quantity = reader.GetInt32(reader.GetOrdinal("Quantity")),
                             ProductTypeId = reader.GetInt32(reader.GetOrdinal("ProductTypeId")),
                             CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId"))
@@ -154,15 +154,14 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE Product
-                            SET ProductTypeId = @productTypeId
-                            SET CustomerId = @customerId
-                            SET Price = @price
-                            SET Title = @title
-                            SET Description = @description
-                            SET Quantity = @quantity
-                            WHERE Id = @id
-                        ";
-                        cmd.Parameters.Add(new SqlParameter("@id", product.Id));
+                            SET ProductTypeId = @productTypeId,
+                            CustomerId = @customerId,
+                            Price = @price,
+                            Title = @title,
+                            Description = @description,
+                            Quantity = @quantity
+                            WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@productTypeId", product.ProductTypeId));
                         cmd.Parameters.Add(new SqlParameter("@customerId", product.CustomerId));
                         cmd.Parameters.Add(new SqlParameter("@price", product.Price));
@@ -185,7 +184,7 @@ namespace BangazonAPI.Controllers
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 if (!ProductExists(id))
                 {

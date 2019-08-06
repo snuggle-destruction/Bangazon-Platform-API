@@ -126,7 +126,7 @@ namespace TestBangazonAPI
 
                 string newTitle = "The Goofest Troop";
                 string newDescription = "It's the goofest troop";
-                decimal newPrice = 650.34000M;
+                decimal newPrice = 650.34M;
 
                 var newProduct = new Product
                 {
