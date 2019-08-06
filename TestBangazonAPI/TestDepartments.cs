@@ -120,7 +120,7 @@ namespace TestBangazonAPI
                     ARRANGE
                 */
 
-                string newName = "Human Dumbsources";
+                string newName = "Humafdsfdsan Dumbsources";
 
                 int newBudget = 69;
 

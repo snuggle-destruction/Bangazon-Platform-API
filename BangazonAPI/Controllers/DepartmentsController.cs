@@ -193,11 +193,11 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE Department
-                            SET Name = @name
+                            SET [Name] = @name,
                                 Budget = @budget
                             WHERE Id = @id
                         ";
-                        cmd.Parameters.Add(new SqlParameter("@id", department.Id));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@name", department.Name));
                         cmd.Parameters.Add(new SqlParameter("@budget", department.Budget));
 
@@ -206,6 +206,10 @@ namespace BangazonAPI.Controllers
                         if (rowsAffected > 0)
                         {
                             return OK();
+                        }
+                        else
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
 
                         throw new Exception("No rows affected");
