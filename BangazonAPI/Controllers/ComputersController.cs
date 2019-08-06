@@ -115,7 +115,7 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     // More string interpolation
-                    cmd.CommandText = @"INSERT INTO Computer PurchaseDate, DecomissionDate, Make, Manufacturer
+                    cmd.CommandText = @"INSERT INTO Computer (PurchaseDate, DecomissionDate, Make, Manufacturer)
                                         OUTPUT INSERTED.Id
                                         VALUES (@purchaseDate, @decomissionDate, @make, @manufacturer)";
                     cmd.Parameters.Add(new SqlParameter("@purchaseDate", computer.PurchaseDate));
@@ -147,6 +147,7 @@ namespace BangazonAPI.Controllers
                                                 Make = @make,
                                                 Manufacturer = @manufacturer
                                             WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@purchaseDate", computer.PurchaseDate));
                         cmd.Parameters.Add(new SqlParameter("@decomissionDate", computer.DecomissionDate));
                         cmd.Parameters.Add(new SqlParameter("@make", computer.Make));
@@ -157,6 +158,10 @@ namespace BangazonAPI.Controllers
                         if (rowsAffected > 0)
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        else
+                        {
+                            return Ok();
                         }
 
                         throw new Exception("No rows affected");
@@ -195,6 +200,11 @@ namespace BangazonAPI.Controllers
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
+                        else
+                        {
+                            return Ok();
+                        }
+
                         throw new Exception("No rows affected");
                     }
                 }

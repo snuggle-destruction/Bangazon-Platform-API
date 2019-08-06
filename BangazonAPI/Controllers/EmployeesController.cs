@@ -115,17 +115,29 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     // More string interpolation
-                    cmd.CommandText = @"INSERT INTO Employee FirstName, LastName, IsSupervisor, DepartmentId
-                                        OUTPUT INSERTED.Id
-                                        VALUES (@firstName, @lastNate, @isSupervisor, @departmentId)";
+                    cmd.CommandText = @"DECLARE @EmployeeTemp TABLE (Id int);
+                                        
+                                        INSERT INTO Employee (FirstName, LastName, IsSupervisor, DepartmentId)
+                                        OUTPUT INSERTED.Id INTO @EmployeeTemp(Id)
+                                        VALUES (@firstName, @lastName, @isSupervisor, @departmentId)
+                                        
+                                        SELECT TOP 1 @ID = Id FROM @EmployeeTemp";
+
+                    SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
+                    outputParam.Direction = ParameterDirection.Output;
+
                     cmd.Parameters.Add(new SqlParameter("@firstName", employee.FirstName));
-                    cmd.Parameters.Add(new SqlParameter("@lastNate", employee.LastName));
+                    cmd.Parameters.Add(new SqlParameter("@lastName", employee.LastName));
                     cmd.Parameters.Add(new SqlParameter("@isSupervisor", employee.IsSupervisor));
                     cmd.Parameters.Add(new SqlParameter("@departmentId", employee.DepartmentId));
 
-                    employee.Id = (int)await cmd.ExecuteScalarAsync();
+                    cmd.ExecuteNonQuery();
 
-                    return CreatedAtRoute("GetEmployee", new { id = employee.Id }, employee);
+                    var newEmployeeId = (int)outputParam.Value;
+                    employee.Id = newEmployeeId;
+
+
+                    return Ok(employee);
                 }
             }
         }
@@ -147,9 +159,9 @@ namespace BangazonAPI.Controllers
                                                 IsSupervisor = @isSupervisor,
                                                 DepartmentId = @departmentId
                                             WHERE Id = @id";
-                        cmd.Parameters.Add(new SqlParameter("@id", employee.Id));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@firstName", employee.FirstName));
-                        cmd.Parameters.Add(new SqlParameter("@lastNate", employee.LastName));
+                        cmd.Parameters.Add(new SqlParameter("@lastName", employee.LastName));
                         cmd.Parameters.Add(new SqlParameter("@isSupervisor", employee.IsSupervisor));
                         cmd.Parameters.Add(new SqlParameter("@departmentId", employee.DepartmentId));
 
@@ -158,6 +170,10 @@ namespace BangazonAPI.Controllers
                         if (rowsAffected > 0)
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
+                        }
+                        else
+                        {
+                            return Ok();
                         }
 
                         throw new Exception("No rows affected");
@@ -196,6 +212,11 @@ namespace BangazonAPI.Controllers
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
+                        else
+                        {
+                            return Ok();
+                        }
+
                         throw new Exception("No rows affected");
                     }
                 }
