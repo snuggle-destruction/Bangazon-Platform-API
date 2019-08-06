@@ -20,11 +20,7 @@
     "BangazonAPI": {
       "commandName": "Project",
       "launchBrowser": true,
-<<<<<<< HEAD
-      "launchUrl": "api/values",
-=======
       "launchUrl": "api/customers",
->>>>>>> master
       "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

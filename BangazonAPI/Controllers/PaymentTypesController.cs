@@ -39,7 +39,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT * FROM PaymentType;";
+                    cmd.CommandText = "SELECT Id, AcctNumber, [Name], CustomerId FROM PaymentType;";
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                     List<PaymentType> paymentTypes = new List<PaymentType>();
@@ -48,8 +48,9 @@ namespace BangazonAPI.Controllers
                         PaymentType paymentType = new PaymentType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            
-                            // You might have more columns
+                            AcctNumber = reader.GetInt32(reader.GetOrdinal("AcctNumber")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId"))
                         };
 
                         paymentTypes.Add(paymentType);
@@ -71,7 +72,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT * FROM Product WHERE id = @id";
+                    cmd.CommandText = @"SELECT * FROM PaymentType WHERE id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
@@ -81,8 +82,9 @@ namespace BangazonAPI.Controllers
                         paymentType = new PaymentType
                         {
                             Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            
-                            // You might have more columns
+                            AcctNumber = reader.GetInt32(reader.GetOrdinal("AcctNumber")),
+                            Name = reader.GetString(reader.GetOrdinal("Name")),
+                            CustomerId = reader.GetInt32(reader.GetOrdinal("CustomerId"))
                         };
                     }
 
@@ -102,14 +104,15 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    // More string interpolation
                     cmd.CommandText = @"
-                        INSERT INTO Product (ProductTypeId, CustomerId, Price, Title, Description, Quantity)
+                        INSERT INTO PaymentType (Id, AcctNumber, [Name], CustomerId)
                         OUTPUT INSERTED.Id
-                        VALUES (@productTypeId, @customerId, @price, @title, @description, @quantity);
+                        VALUES (@id, @acctNumber, @name, @customerId);
                     ";
-                    cmd.Parameters.Add(new SqlParameter("@productTypeId", paymentType.AcctNumber));
-                    cmd.Parameters.Add(new SqlParameter("@customerId", paymentType.Name));
+                    cmd.Parameters.Add(new SqlParameter("@id", paymentType.Id));
+                    cmd.Parameters.Add(new SqlParameter("@acctNumber", paymentType.AcctNumber));
+                    cmd.Parameters.Add(new SqlParameter("@name", paymentType.Name));
+                    cmd.Parameters.Add(new SqlParameter("@customerId", paymentType.CustomerId));
                     
 
                     paymentType.Id = (int)await cmd.ExecuteScalarAsync();
@@ -131,16 +134,16 @@ namespace BangazonAPI.Controllers
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"
-                            UPDATE Product
-                            SET ProductTypeId = @productTypeId
+                            UPDATE PaymentType
+                            SET AcctNumber = @acctNumber
+                            SET [Name] = @name
                             SET CustomerId = @customerId
-                            SET Price = @price
-                            SET Title = @title
-                            SET Description = @description
-                            SET Quantity = @quantity
                             WHERE Id = @id
                         ";
                         cmd.Parameters.Add(new SqlParameter("@id", paymentType.Id));
+                        cmd.Parameters.Add(new SqlParameter("@acctNumber", paymentType.AcctNumber));
+                        cmd.Parameters.Add(new SqlParameter("@name", paymentType.Name));
+                        cmd.Parameters.Add(new SqlParameter("@customerId", paymentType.CustomerId));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
@@ -155,7 +158,7 @@ namespace BangazonAPI.Controllers
             }
             catch (Exception)
             {
-                if (!ProductExists(id))
+                if (!PaymentTypeExists(id))
                 {
                     return NotFound();
                 }
@@ -177,7 +180,7 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"DELETE FROM Product WHERE Id = @id";
+                        cmd.CommandText = @"DELETE FROM PaymentType WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
@@ -191,7 +194,7 @@ namespace BangazonAPI.Controllers
             }
             catch (Exception)
             {
-                if (!ProductExists(id))
+                if (!PaymentTypeExists(id))
                 {
                     return NotFound();
                 }
@@ -202,7 +205,7 @@ namespace BangazonAPI.Controllers
             }
         }
 
-        private bool ProductExists(int id)
+        private bool PaymentTypeExists(int id)
         {
             using (SqlConnection conn = Connection)
             {
