@@ -214,6 +214,10 @@ namespace BangazonAPI.Controllers
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
                         {
+                            return Ok();
+                        }
+                        else
+                        {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
                         throw new Exception("No rows affected");

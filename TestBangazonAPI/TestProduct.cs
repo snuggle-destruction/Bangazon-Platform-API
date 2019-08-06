@@ -168,7 +168,7 @@ namespace TestBangazonAPI
                     ACT
                 */
                 var response = await client.DeleteAsync(
-                    "/api/Product/6"
+                    "/api/products/16"
                 );
 
                 /*
