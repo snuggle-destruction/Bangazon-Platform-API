@@ -122,7 +122,7 @@ namespace BangazonAPI.Controllers
         }
 
         // GET api/values/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetDepartment")]
         public async Task<IActionResult> Get(int id)
         {
             using (SqlConnection conn = Connection)
@@ -175,7 +175,7 @@ namespace BangazonAPI.Controllers
 
                     department.Id = (int)await cmd.ExecuteScalarAsync();
 
-                    return CreatedAtRoute("GetCustomer", new { id = department.Id }, department);
+                    return CreatedAtRoute("GetDepartment", new { id = department.Id }, department);
                 }
             }
         }
@@ -205,7 +205,7 @@ namespace BangazonAPI.Controllers
 
                         if (rowsAffected > 0)
                         {
-                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                            return OK();
                         }
 
                         throw new Exception("No rows affected");
@@ -223,6 +223,11 @@ namespace BangazonAPI.Controllers
                     throw;
                 }
             }
+        }
+
+        private IActionResult OK()
+        {
+            throw new NotImplementedException();
         }
 
         // DELETE api/values/5
