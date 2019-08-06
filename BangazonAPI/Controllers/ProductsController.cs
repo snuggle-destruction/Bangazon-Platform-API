@@ -39,7 +39,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT ProductTypeId, CustomerId, Price, Title, Description, Quantity FROM Product;";
+                    cmd.CommandText = "SELECT Id, CustomerId, Price, Title, Description, ProductTypeId, Quantity FROM Product;";
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                     List<Product> products = new List<Product>();
@@ -76,7 +76,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT ProductTypeId, CustomerId, Price, Title, Description, Quantity FROM Product WHERE id = @id";
+                    cmd.CommandText = @"SELECT Id, CustomerId, Price, Title, Description, ProductTypeId, Quantity FROM Product WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
@@ -113,11 +113,17 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     // More string interpolation
-                    cmd.CommandText = @"
+                    cmd.CommandText = @"DECLARE @ProductTemp Table(Id int);
+
                         INSERT INTO Product (ProductTypeId, CustomerId, Price, Title, Description, Quantity)
-                        OUTPUT INSERTED.Id
-                        VALUES (@productTypeId, @customerId, @price, @title, @description, @quantity);
+                        OUTPUT INSERTED.Id INTO @ProductTemp(Id)
+                        VALUES (@productTypeId, @customerId, @price, @title, @description, @quantity)
+
+                        SELECT TOP 1 @ID = Id FROM @ProductTemp
                     ";
+                    SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
+                    outputParam.Direction = ParameterDirection.Output;
+
                     cmd.Parameters.Add(new SqlParameter("@productTypeId", product.ProductTypeId));
                     cmd.Parameters.Add(new SqlParameter("@customerId", product.CustomerId));
                     cmd.Parameters.Add(new SqlParameter("@price", product.Price));
@@ -125,9 +131,12 @@ namespace BangazonAPI.Controllers
                     cmd.Parameters.Add(new SqlParameter("@description", product.Description));
                     cmd.Parameters.Add(new SqlParameter("@quantity", product.Quantity));
 
-                    product.Id = (int)await cmd.ExecuteScalarAsync();
+                    cmd.ExecuteNonQuery();
 
-                    return CreatedAtRoute("GetProduct", new { id = product.Id }, product);
+                    var newProductId = (int)outputParam.Value;
+                    product.Id = newProductId;
+
+                    return Ok(product);
                 }
             }
         }
@@ -164,6 +173,10 @@ namespace BangazonAPI.Controllers
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
                         if (rowsAffected > 0)
+                        {
+                            return Ok();
+                        }
+                        else
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
