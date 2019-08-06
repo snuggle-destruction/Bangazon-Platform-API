@@ -169,11 +169,11 @@ namespace BangazonAPI.Controllers
 
                         if (rowsAffected > 0)
                         {
-                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                            return Ok();
                         }
                         else
                         {
-                            return Ok();
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
 
                         throw new Exception("No rows affected");
@@ -210,11 +210,11 @@ namespace BangazonAPI.Controllers
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
                         {
-                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                            return Ok();
                         }
                         else
                         {
-                            return Ok();
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
 
                         throw new Exception("No rows affected");

@@ -157,7 +157,7 @@ namespace TestBangazonAPI
                     ARRANGE
                 */
 
-                /*C:\Users\shell\group-projects\Bangazon-Platform-API\BangazonAPI\Controllers\EmployeesController.cs
+                /*
                     ACT
                 */
                 var response = await client.DeleteAsync(
