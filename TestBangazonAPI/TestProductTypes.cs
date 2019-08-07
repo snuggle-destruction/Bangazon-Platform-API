@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using Newtonsoft.Json;
 using Xunit;
@@ -103,7 +103,7 @@ namespace TestBangazonAPI
                 /*
                     ASSERT
                 */
-                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                Assert.Equal(HttpStatusCode.Created, response.StatusCode);
                 Assert.True(newProductTypeReturned.Id > 0);
             }
         }
@@ -130,14 +130,23 @@ namespace TestBangazonAPI
                     ACT
                 */
                 var response = await client.PutAsync(
-                    "/api/productTypes/5",
+                    "/api/productTypes/1",
                     new StringContent(newProductTypeAsJSON, Encoding.UTF8, "application/json")
                 );
+                string responseBody = await response.Content.ReadAsStringAsync();
 
                 /*
                     ASSERT
                 */
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                var GetProductType = await client.GetAsync("/api/productTypes/1");
+                GetProductType.EnsureSuccessStatusCode();
+
+                string GetProductTypeBody = await GetProductType.Content.ReadAsStringAsync();
+                ProductType ModifiedProductType = JsonConvert.DeserializeObject<ProductType>(GetProductTypeBody);
+
+                Assert.Equal(HttpStatusCode.OK, GetProductType.StatusCode);
+                Assert.Equal(newName, ModifiedProductType.Name);
             }
         }
 
@@ -154,7 +163,7 @@ namespace TestBangazonAPI
                     ACT
                 */
                 var response = await client.DeleteAsync(
-                    "/api/productTypes/8"
+                    "/api/productTypes/10"
                 );
 
                 /*
