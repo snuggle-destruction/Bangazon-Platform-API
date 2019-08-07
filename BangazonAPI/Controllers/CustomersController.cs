@@ -55,7 +55,8 @@ namespace BangazonAPI.Controllers
                      FROM Customer c
                      LEFT JOIN PaymentType p ON c.Id = p.CustomerId";
             }
-            else if (q != null)
+
+            if (q != null)
             {
                 SqlCommandText = $@"{SqlCommandText} WHERE (
                     c.FirstName LIKE @q
