@@ -31,35 +31,57 @@ namespace BangazonAPI.Controllers
 
         // GET api/values
         [HttpGet]
+
         public async Task<IActionResult> Get()
         {
             using (SqlConnection conn = Connection)
             {
+                var employeesList = new List<Employee>();
+
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT Id, FirstName, LastName, IsSupervisor, DepartmentId 
-                                        FROM Employee";
+
+                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.IsSupervisor, d.Name as Department, co.Make, co.Manufacturer
+                                        FROM Employee e
+                                        JOIN Department d
+                                        ON e.DepartmentId = d.Id
+                                        JOIN ComputerEmployee ce
+                                        ON e.Id = ce.EmployeeId
+                                        Join Computer co
+                                        ON ce.ComputerId = co.Id";
+
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
-                    List<Employee> employees = new List<Employee>();
+
                     while (reader.Read())
                     {
+                        int idColumnPosition = reader.GetOrdinal("Id");
+                        int idValue = reader.GetInt32(idColumnPosition);
+
+                        var FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
+                        var LastName = reader.GetString(reader.GetOrdinal("LastName"));
+                        var IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor"));
+                        var Department = reader.GetString(reader.GetOrdinal("Department"));
+                        var Make = reader.GetString(reader.GetOrdinal("Make"));
+                        var Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"));
+
                         Employee employee = new Employee
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
-                            LastName = reader.GetString(reader.GetOrdinal("LastName")),
-                            IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor")),
-                            DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId"))
+                            Id = idValue,
+                            FirstName = FirstName,
+                            LastName = LastName,
+                            IsSupervisor = IsSupervisor,
+                            department = new Department { Name = Department },
+                            computer = new Computer { Make = Make, Manufacturer = Manufacturer }
                         };
 
-                        employees.Add(employee);
+                        employeesList.Add(employee);
                     }
 
                     reader.Close();
 
-                    return Ok(employees);
+                    return Ok(employeesList);
                 }
             }
         }
@@ -167,11 +189,11 @@ namespace BangazonAPI.Controllers
 
                         if (rowsAffected > 0)
                         {
-                            return Ok();
+                           return Ok();
                         }
                         else
                         {
-                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                           return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
 
                         throw new Exception("No rows affected");

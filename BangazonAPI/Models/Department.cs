@@ -8,6 +8,8 @@ namespace BangazonAPI.Models
 {
     public class Department
     {
+        private List<Employee> _employeeList = null;
+
         public int Id { get; set; }
 
         [Required]
@@ -17,5 +19,6 @@ namespace BangazonAPI.Models
         public int Budget { get; set; }
 
         public List<Employee> Employees = new List<Employee>();
+
     }
 }

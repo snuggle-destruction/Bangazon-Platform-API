@@ -57,7 +57,7 @@ namespace TestBangazonAPI
 
 
                 string responseBodyWithAllComputers = await responseWithAllComputers.Content.ReadAsStringAsync();
-                var allComputers = JsonConvert.DeserializeObject<List<Employee>>(responseBodyWithAllComputers);
+                var allComputers = JsonConvert.DeserializeObject<List<Computer>>(responseBodyWithAllComputers);
 
 
                 var response = await client.GetAsync("/api/computers/" + allComputers.First().Id);
@@ -164,7 +164,7 @@ namespace TestBangazonAPI
                     ACT
                 */
                 var response = await client.DeleteAsync(
-                    "/api/computers/8"
+                    "/api/computers/9"
                 );
 
                 /*

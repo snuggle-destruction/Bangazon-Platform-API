@@ -351,4 +351,9 @@ bin
 obj
 .DS_Store
 .vs
+.vscode
 node_modules
+
+appsettings.Development.json
+appsettings.Testing.json
+appsettings.json
