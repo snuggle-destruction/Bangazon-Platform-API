@@ -119,8 +119,8 @@ namespace BangazonAPI.Controllers
                         OUTPUT INSERTED.Id INTO @ProductTemp(Id)
                         VALUES (@productTypeId, @customerId, @price, @title, @description, @quantity)
 
-                        SELECT TOP 1 @ID = Id FROM @ProductTemp
-                    ";
+                        SELECT TOP 1 @ID = Id FROM @ProductTemp";
+
                     SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
                     outputParam.Direction = ParameterDirection.Output;
 
@@ -155,12 +155,13 @@ namespace BangazonAPI.Controllers
                         cmd.CommandText = @"
                             UPDATE Product
                             SET ProductTypeId = @productTypeId,
-                            CustomerId = @customerId,
-                            Price = @price,
-                            Title = @title,
-                            Description = @description,
-                            Quantity = @quantity
+                                CustomerId = @customerId,
+                                Price = @price,
+                                Title = @title,
+                                Description = @description,
+                                Quantity = @quantity
                             WHERE Id = @id";
+
                         cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@productTypeId", product.ProductTypeId));
                         cmd.Parameters.Add(new SqlParameter("@customerId", product.CustomerId));

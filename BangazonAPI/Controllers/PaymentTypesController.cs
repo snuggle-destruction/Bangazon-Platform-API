@@ -72,7 +72,7 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"SELECT * FROM PaymentType WHERE id = @id";
+                    cmd.CommandText = @"SELECT Id, AcctNumber, [Name], CustomerId FROM PaymentType WHERE id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
@@ -104,20 +104,27 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = @"
-                        INSERT INTO PaymentType (Id, AcctNumber, [Name], CustomerId)
-                        OUTPUT INSERTED.Id
-                        VALUES (@id, @acctNumber, @name, @customerId);
-                    ";
-                    cmd.Parameters.Add(new SqlParameter("@id", paymentType.Id));
+                    cmd.CommandText = @"DECLARE @PaymentTypeTemp Table(Id int);
+
+                        INSERT INTO PaymentType (AcctNumber, [Name], CustomerId)
+                        OUTPUT INSERTED.Id INTO @PaymentTypeTemp(Id)
+                        VALUES (@acctNumber, @name, @customerId)
+
+                        SELECT TOP 1 @ID = Id FROM @PaymentTypeTemp";
+
+                    SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
+                    outputParam.Direction = ParameterDirection.Output;
+
                     cmd.Parameters.Add(new SqlParameter("@acctNumber", paymentType.AcctNumber));
                     cmd.Parameters.Add(new SqlParameter("@name", paymentType.Name));
                     cmd.Parameters.Add(new SqlParameter("@customerId", paymentType.CustomerId));
-                    
 
-                    paymentType.Id = (int)await cmd.ExecuteScalarAsync();
+                    cmd.ExecuteNonQuery();
 
-                    return CreatedAtRoute("GetProduct", new { id = paymentType.Id }, paymentType);
+                    var newPaymentType = (int)outputParam.Value;
+                    paymentType.Id = newPaymentType;
+
+                    return Ok(paymentType);
                 }
             }
         }
@@ -135,12 +142,12 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE PaymentType
-                            SET AcctNumber = @acctNumber
-                            SET [Name] = @name
-                            SET CustomerId = @customerId
-                            WHERE Id = @id
-                        ";
-                        cmd.Parameters.Add(new SqlParameter("@id", paymentType.Id));
+                            SET AcctNumber = @acctNumber,
+                                [Name] = @name,
+                                CustomerId = @customerId
+                            WHERE Id = @id";
+
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@acctNumber", paymentType.AcctNumber));
                         cmd.Parameters.Add(new SqlParameter("@name", paymentType.Name));
                         cmd.Parameters.Add(new SqlParameter("@customerId", paymentType.CustomerId));
@@ -148,6 +155,10 @@ namespace BangazonAPI.Controllers
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
                         if (rowsAffected > 0)
+                        {
+                            return Ok();
+                        }
+                        else
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
@@ -185,6 +196,10 @@ namespace BangazonAPI.Controllers
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
+                        {
+                            return Ok();
+                        }
+                        else
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
