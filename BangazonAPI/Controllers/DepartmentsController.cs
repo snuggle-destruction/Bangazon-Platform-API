@@ -32,14 +32,36 @@ namespace BangazonAPI.Controllers
 
         // GET api/values
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string _include, string _filter, int? _gt)
         {
+            string SqlCommandText = @"SELECT d.Id as DepartmentId, d.Name, d.Budget
+                                FROM Department d";
+
+            if (_include == "employees")
+            {
+                SqlCommandText = @"SELECT d.Id as DepartmentId, d.Name, d.Budget,
+                                e.Id as EmployeeId, e.FirstName, e.LastName, e.IsSupervisor, e.DepartmentId
+                                FROM Department d
+                                LEFT JOIN Employee e ON d.ID = e.DepartmentId";
+            }
+            if (_filter == "budget" && _gt != null)
+            {
+                SqlCommandText = $"{SqlCommandText} WHERE d.Budget >= @gt";
+            }
+
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT Id, Name, Budget FROM Department";
+                    cmd.CommandText = SqlCommandText;
+
+                    if (_filter == "budget" && _gt != null)
+                    {
+                        cmd.Parameters.Add(new SqlParameter("@gt", _gt));
+
+                    }
+
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                     List<Department> departments = new List<Department>();
@@ -47,13 +69,49 @@ namespace BangazonAPI.Controllers
                     {
                         Department department = new Department
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                            Id = reader.GetInt32(reader.GetOrdinal("DepartmentId")),
                             Name = reader.GetString(reader.GetOrdinal("Name")),
                             Budget = reader.GetInt32(reader.GetOrdinal("Budget")),
-                            // You might have more columns
                         };
 
-                        departments.Add(department);
+                        if (_include == "employees")
+                        {
+                            Employee employee = new Employee();
+                            if (!reader.IsDBNull(reader.GetOrdinal("EmployeeId")))
+                            {
+                                employee.Id = reader.GetInt32(reader.GetOrdinal("EmployeeId"));
+                                employee.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
+                                employee.LastName = reader.GetString(reader.GetOrdinal("LastName"));
+                                employee.IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor"));
+                                employee.DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId"));
+                            }
+                            else
+                            {
+                                employee = null;
+                            };
+
+                            if (departments.Any(d => d.Id == department.Id))
+                            {
+                                Department existingDepartment = departments.Find(d => d.Id == department.Id);
+                                existingDepartment.Employees.Add(employee);
+                            }
+                            else
+                            {
+                                department.Employees.Add(employee);
+                                departments.Add(department);
+                            }
+                        }
+                        else
+                        {
+                            if (departments.Any(d => d.Id == department.Id))
+                            {
+                                Department existingDepartment = departments.Find(d => d.Id == department.Id);
+                            }
+                            else
+                            {
+                                departments.Add(department);
+                            }
+                        }
                     }
 
                     reader.Close();
@@ -64,7 +122,7 @@ namespace BangazonAPI.Controllers
         }
 
         // GET api/values/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetDepartment")]
         public async Task<IActionResult> Get(int id)
         {
             using (SqlConnection conn = Connection)
@@ -117,7 +175,7 @@ namespace BangazonAPI.Controllers
 
                     department.Id = (int)await cmd.ExecuteScalarAsync();
 
-                    return CreatedAtRoute("GetCustomer", new { id = department.Id }, department);
+                    return CreatedAtRoute("GetDepartment", new { id = department.Id }, department);
                 }
             }
         }
@@ -133,19 +191,21 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"
-                            UPDATE Department
-                            SET Name = @name
-                                Budget = @budget
-                            WHERE Id = @id
-                        ";
-                        cmd.Parameters.Add(new SqlParameter("@id", department.Id));
+                        cmd.CommandText = @"UPDATE Department
+                                            SET [Name] = @name,
+                                                Budget = @budget
+                                            WHERE Id = @id";
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@name", department.Name));
                         cmd.Parameters.Add(new SqlParameter("@budget", department.Budget));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
                         if (rowsAffected > 0)
+                        {
+                            return Ok();
+                        }
+                        else
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
@@ -165,6 +225,11 @@ namespace BangazonAPI.Controllers
                     throw;
                 }
             }
+        }
+
+        private IActionResult OK()
+        {
+            throw new NotImplementedException();
         }
 
         // DELETE api/values/5
