@@ -120,7 +120,7 @@ namespace TestBangazonAPI
                     ACT
                 */
                 var response = await client.PutAsync(
-                    "/api/orders/2",
+                    "/api/orders/6",
                     new StringContent(newOrderAsJSON, Encoding.UTF8, "application/json")
                 );
 
@@ -140,7 +140,7 @@ namespace TestBangazonAPI
                     ACT
                 */
                 var response = await client.DeleteAsync(
-                    "/api/orders/4"
+                    "/api/orders/6"
                 );
 
                 /*

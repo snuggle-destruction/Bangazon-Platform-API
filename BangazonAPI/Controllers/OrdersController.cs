@@ -318,16 +318,29 @@ namespace BangazonAPI.Controllers
                 {
                     // More string interpolation
                     cmd.CommandText = @"
+                        DECLARE @TempOrdersTable TABLE (Id int)
                         INSERT INTO [Order] (CustomerId, PaymentTypeId)
-                        OUTPUT INSERTED.Id
+                        OUTPUT INSERTED.Id INTO @TempOrdersTable(Id)
                         VALUES (@customerId, @paymentTypeId)
+                        SELECT TOP 1 @ID = Id FROM @TempOrdersTable
                     ";
+
+                    SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
+                    outputParam.Direction = ParameterDirection.Output;
+
                     cmd.Parameters.Add(new SqlParameter("@customerId", order.CustomerId));
                     cmd.Parameters.Add(new SqlParameter("@paymentTypeId", order.PaymentTypeId));
 
-                    order.Id = (int)await cmd.ExecuteScalarAsync();
+                    //order.Id = (int)await cmd.ExecuteScalarAsync();
 
-                    return CreatedAtRoute("GetOrder", new { id = order.Id }, order);
+                    //return CreatedAtRoute("GetOrder", new { id = order.Id }, order);
+
+                    cmd.ExecuteNonQuery();
+
+                    var newOrderId = (int)outputParam.Value;
+                    order.Id = newOrderId;
+
+                    return Ok(order);
                 }
             }
         }
@@ -344,18 +357,22 @@ namespace BangazonAPI.Controllers
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
                         cmd.CommandText = @"
-                            UPDATE Order
+                            UPDATE [Order]
                             SET CustomerId = @customerId,
                                 PaymentTypeId = @paymentTypeId
                             WHERE Id = @id
                         ";
-                        cmd.Parameters.Add(new SqlParameter("@id", order.Id));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@customerId", order.CustomerId));
                         cmd.Parameters.Add(new SqlParameter("@paymentTypeId", order.PaymentTypeId));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
                         if (rowsAffected > 0)
+                        {
+                            return Ok();
+                        }
+                        else
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
@@ -387,15 +404,20 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"DELETE FROM Order WHERE Id = @id";
+                        cmd.CommandText = @"DELETE FROM [Order] WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
                         {
-                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                            return Ok();
                         }
-                        throw new Exception("No rows affected");
+                        else
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+
+                        }
+                        throw new Exception("No rows were deleted from orders.");
                     }
                 }
             }

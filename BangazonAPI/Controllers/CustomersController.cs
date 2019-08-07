@@ -289,10 +289,7 @@ namespace BangazonAPI.Controllers
                     var newCustomerId = (int)outputParam.Value;
                     customer.Id = newCustomerId;
 
-
                     return Ok(customer);
-
-
                 }
             }
         }
