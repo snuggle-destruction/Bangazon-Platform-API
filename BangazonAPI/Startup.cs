@@ -31,7 +31,8 @@ namespace BangazonAPI
                     builder =>
                     {
 
-                        builder.WithOrigins("http://bangazon.com");
+                        builder.WithOrigins("http://bangazon.com",
+                                            "http://localhost:3000");
                     });
 
             });
