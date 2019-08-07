@@ -191,12 +191,10 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"
-                            UPDATE Department
-                            SET [Name] = @name,
-                                Budget = @budget
-                            WHERE Id = @id
-                        ";
+                        cmd.CommandText = @"UPDATE Department
+                                            SET [Name] = @name,
+                                                Budget = @budget
+                                            WHERE Id = @id";
                         cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@name", department.Name));
                         cmd.Parameters.Add(new SqlParameter("@budget", department.Budget));
@@ -205,7 +203,7 @@ namespace BangazonAPI.Controllers
 
                         if (rowsAffected > 0)
                         {
-                            return OK();
+                            return Ok();
                         }
                         else
                         {
