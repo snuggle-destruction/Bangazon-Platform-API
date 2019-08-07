@@ -32,12 +32,14 @@ namespace BangazonAPI.Controllers
 
         // GET api/customers
         [HttpGet]
-        public async Task<IActionResult> Get([FromQuery] string q, string _include)
+        public async Task<IActionResult> Get([FromQuery] string q, string _include, string active)
         {
 
             string SqlCommandText = @"
-                        SELECT c.Id as CustomerId, c.FirstName, c.LastName                 
-                        FROM Customer c";
+                        SELECT c.Id as CustomerId, c.FirstName, c.LastName,
+                               o.Id as OrderId, o.CustomerId, o.PaymentTypeId
+                        FROM Customer c
+                        LEFT JOIN [Order] o on o.CustomerId = c.Id";
 
             if (_include == "products")
             {
@@ -54,6 +56,14 @@ namespace BangazonAPI.Controllers
                      p.Id as PaymentTypeId, p.[Name] as PaymentTypeName, p.AcctNumber, p.CustomerId
                      FROM Customer c
                      LEFT JOIN PaymentType p ON c.Id = p.CustomerId";
+            }
+            else if (active == "false")
+            {
+                SqlCommandText = @"
+                    SELECT c.Id as CustomerId, c.FirstName, c.LastName
+                    FROM [Customer] c
+                    LEFT JOIN [Order] o on o.CustomerId = c.Id
+                    WHERE o.Id IS NULL";
             }
 
             if (q != null)
@@ -89,8 +99,14 @@ namespace BangazonAPI.Controllers
                             FirstName = reader.GetString(reader.GetOrdinal("FirstName")),
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
                             Products = new List<Product>(),
-                            PaymentTypes = new List<PaymentType>()
+                            PaymentTypes = new List<PaymentType>(),
+                            IsActive = false
                         };
+                        if (!reader.IsDBNull(reader.GetOrdinal("OrderId")))
+                        {
+                            customer.IsActive = true;
+                        }
+                        
 
                         if (_include == "products")
                         {
@@ -144,6 +160,17 @@ namespace BangazonAPI.Controllers
                             else
                             {
                                 customer.PaymentTypes.Add(paymentType);
+                                customers.Add(customer);
+                            }
+                        }
+                        else if (active == "false")
+                        {
+                            if (customers.Any(c => c.Id == customer.Id))
+                            {
+                                Customer existingCustomer = customers.Find(c => c.Id == customer.Id);
+                            }
+                            else
+                            {
                                 customers.Add(customer);
                             }
                         }
