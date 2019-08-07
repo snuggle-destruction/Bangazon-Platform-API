@@ -62,7 +62,7 @@ namespace BangazonAPI.Controllers
         }
 
         // GET api/values/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetProductType")]
         public async Task<IActionResult> Get(int id)
         {
             using (SqlConnection conn = Connection)
@@ -113,7 +113,7 @@ namespace BangazonAPI.Controllers
 
                     productType.Id = (int)await cmd.ExecuteScalarAsync();
 
-                    return CreatedAtRoute("GetCustomer", new { id = productType.Id }, productType);
+                    return CreatedAtRoute("GetProductType", new { id = productType.Id }, productType);
                 }
             }
         }
@@ -131,10 +131,10 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE ProductType
-                            SET Name = @name
+                            SET [Name] = @name
                             WHERE Id = @id
                         ";
-                        cmd.Parameters.Add(new SqlParameter("@id", productType.Id));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@name", productType.Name));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
