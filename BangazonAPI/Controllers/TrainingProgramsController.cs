@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
@@ -148,18 +149,29 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     // More string interpolation
-                    cmd.CommandText = @"INSERT INTO Department (Name, StartDate, EndDate, MaxAttendees)
-                                        OUTPUT INSERTED.Id
-                                        VALUES (@name, @startDate, @endDate, maxAttendees)";
+                    cmd.CommandText = @"DECLARE @TrainingProgramTemp Table(Id int);
+
+                                        INSERT INTO TrainingProgram ([Name], StartDate, EndDate, MaxAttendees)
+                                        OUTPUT INSERTED.Id INTO @TrainingProgramTemp(Id)
+                                        VALUES (@name, @startDate, @endDate, @maxAttendees)
+
+                                        SELECT TOP 1 @ID = Id from @TrainingProgramTemp";
+
+                    SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
+                    outputParam.Direction = ParameterDirection.Output;
+
                     cmd.Parameters.Add(new SqlParameter("@name", trainingProgram.Name));
                     cmd.Parameters.Add(new SqlParameter("@startDate", trainingProgram.StartDate));
                     cmd.Parameters.Add(new SqlParameter("@endDate", trainingProgram.EndDate));
                     cmd.Parameters.Add(new SqlParameter("@maxAttendees", trainingProgram.MaxAttendees));
 
 
-                    trainingProgram.Id = (int)await cmd.ExecuteScalarAsync();
+                    cmd.ExecuteNonQuery();
 
-                    return CreatedAtRoute("GetCustomer", new { id = trainingProgram.Id }, trainingProgram);
+                    var newTrainingProgramId = (int)outputParam.Value;
+                    trainingProgram.Id = newTrainingProgramId;
+
+                    return Ok(trainingProgram);
                 }
             }
         }
@@ -177,22 +189,25 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE TrainingProgram
-                            SET Name = @name
-                                StartDate = @startDate
-                                EndDate = @endDate
+                            SET [Name] = @name,
+                                StartDate = @startDate,
+                                EndDate = @endDate,
                                 MaxAttendees = @maxAttendees
-                            WHERE Id = @id
+                                WHERE Id = @id
                         ";
-                        cmd.Parameters.Add(new SqlParameter("@id", trainingProgram.Id));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@name", trainingProgram.Name));
                         cmd.Parameters.Add(new SqlParameter("@startDate", trainingProgram.StartDate));
                         cmd.Parameters.Add(new SqlParameter("@endDate", trainingProgram.EndDate));
                         cmd.Parameters.Add(new SqlParameter("@maxAttendees", trainingProgram.MaxAttendees));
 
-
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
                         if (rowsAffected > 0)
+                        {
+                            return Ok();
+                        }
+                        else
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
@@ -201,7 +216,7 @@ namespace BangazonAPI.Controllers
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 if (!TrainingProgramExists(id))
                 {
@@ -231,13 +246,17 @@ namespace BangazonAPI.Controllers
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
                         {
+                            return Ok();
+                        }
+                        else
+                        {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
-                        throw new Exception("No rows affected");
+                        throw new Exception("no rows affected");
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 if (!TrainingProgramExists(id))
                 {
