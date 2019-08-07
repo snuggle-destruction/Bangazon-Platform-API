@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net;
 using Newtonsoft.Json;
 using Xunit;
@@ -11,119 +11,117 @@ using System.Net.Http;
 
 namespace TestBangazonAPI
 {
-    public class TestCustomers
+    public class TestOrders
     {
         [Fact]
-        public async Task Test_Get_All_Customers()
+        public async Task Test_Get_All_Orders()
         {
             using (var client = new APIClientProvider().Client)
             {
                 /*
                     ACT
                 */
-                var response = await client.GetAsync("/api/customers");
+                var response = await client.GetAsync("/api/orders");
 
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var customers = JsonConvert.DeserializeObject<List<Customer>>(responseBody);
+                var orders = JsonConvert.DeserializeObject<List<Order>>(responseBody);
 
                 /*
                     ASSERT
                 */
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.True(customers.Count > 0);
+                Assert.True(orders.Count > 0);
             }
         }
 
         [Fact]
-        public async Task Test_Get_One_Customer()
+        public async Task Test_Get_One_Order()
         {
             using (var client = new APIClientProvider().Client)
             {
                 /*
                     ACT
                 */
-                var responseWithAllCustomers = await client.GetAsync("/api/customers");
+                var responseWithAllOrders = await client.GetAsync("/api/orders");
 
 
-                string responseBodyWithAllCustomers = await responseWithAllCustomers.Content.ReadAsStringAsync();
-                var allcustomers = JsonConvert.DeserializeObject<List<Customer>>(responseBodyWithAllCustomers);
+                string responseBodyWithAllOrders = await responseWithAllOrders.Content.ReadAsStringAsync();
+                var allorders = JsonConvert.DeserializeObject<List<Order>>(responseBodyWithAllOrders);
 
 
-                var response = await client.GetAsync("/api/customers/" + allcustomers.First().Id);
+                var response = await client.GetAsync("/api/orders/" + allorders.First().Id);
 
                 string responseBody = await response.Content.ReadAsStringAsync();
-                var customer = JsonConvert.DeserializeObject<Customer>(responseBody);
+                var order = JsonConvert.DeserializeObject<Order>(responseBody);
 
                 /*
                     ASSERT
                 */
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.True(customer.Id > 0);
+                Assert.True(order.Id > 0);
             }
         }
 
         [Fact]
-        public async Task Test_Add_One_Customer()
+        public async Task Test_Add_One_Order()
         {
             using (var client = new APIClientProvider().Client)
             {
                 /*
                     ARRANGE
                 */
-                var newCustomer = new Customer
+                var newOrder = new Order
                 {
-                    FirstName = "Someguy",
-                    LastName = "Fred",
-                    Products = new List<Product>(),
-                    PaymentTypes = new List<PaymentType>()
+                    CustomerId = 1,
+                    PaymentTypeId = 1
                 };
 
-                var newCustomerAsJSON = JsonConvert.SerializeObject(newCustomer);
+                var newOrderAsJSON = JsonConvert.SerializeObject(newOrder);
 
                 /*
                     ACT
                 */
                 var response = await client.PostAsync(
-                    "/api/customers",
-                    new StringContent(newCustomerAsJSON, Encoding.UTF8, "application/json")
+                    "/api/orders",
+                    new StringContent(newOrderAsJSON, Encoding.UTF8, "application/json")
                 );
 
                 string responseBody = await response.Content.ReadAsStringAsync();
 
-                var newCustomerReturned = JsonConvert.DeserializeObject<Customer>(responseBody);
+                var newOrderReturned = JsonConvert.DeserializeObject<Order>(responseBody);
 
                 /*
                     ASSERT
                 */
                 Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-                Assert.True(newCustomerReturned.Id > 0);
+                Assert.True(newOrderReturned.Id > 0);
             }
         }
 
         [Fact]
-        public async Task Test_Update_One_Customer()
+        public async Task Test_Update_One_Order()
         {
             using (var client = new APIClientProvider().Client)
             {
                 /*
                     ARRANGE
                 */
-                string newName = "DummyBoi";
-                var newCustomer = new Customer
+                int newCustomerId = 3;
+                var newOrder = new Order
                 {
-                    FirstName = "Somebody",
-                    LastName = newName
+                    CustomerId = newCustomerId,
+                    PaymentTypeId = 4
                 };
 
-                var newCustomerAsJSON = JsonConvert.SerializeObject(newCustomer);
+                var newOrderAsJSON = JsonConvert.SerializeObject(newOrder);
 
                 /*
                     ACT
                 */
                 var response = await client.PutAsync(
-                    "/api/customers/7",
-                    new StringContent(newCustomerAsJSON, Encoding.UTF8, "application/json")
+                    "/api/orders/6",
+                    new StringContent(newOrderAsJSON, Encoding.UTF8, "application/json")
                 );
 
                 /*
@@ -134,7 +132,7 @@ namespace TestBangazonAPI
         }
 
         [Fact]
-        public async Task Test_Delete_One_Customer()
+        public async Task Test_Delete_One_Order()
         {
             using (var client = new APIClientProvider().Client)
             {
@@ -142,7 +140,7 @@ namespace TestBangazonAPI
                     ACT
                 */
                 var response = await client.DeleteAsync(
-                    "/api/customers/6"
+                    "/api/orders/6"
                 );
 
                 /*

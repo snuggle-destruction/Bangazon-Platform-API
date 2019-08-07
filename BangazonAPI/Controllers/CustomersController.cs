@@ -55,7 +55,8 @@ namespace BangazonAPI.Controllers
                      FROM Customer c
                      LEFT JOIN PaymentType p ON c.Id = p.CustomerId";
             }
-            else if (q != null)
+
+            if (q != null)
             {
                 SqlCommandText = $@"{SqlCommandText} WHERE (
                     c.FirstName LIKE @q
@@ -254,9 +255,7 @@ namespace BangazonAPI.Controllers
                             }
                         }
                     };
-
                     reader.Close();
-
                     return Ok(customer);
                 }
             }
@@ -272,16 +271,25 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     cmd.CommandText = @"
+                        DECLARE @TempCustomerTable TABLE (Id int)
                         INSERT INTO Customer (FirstName, LastName)
-                        OUTPUT INSERTED.Id
+                        OUTPUT INSERTED.Id INTO @TempCustomerTable(Id)
                         VALUES (@firstName, @lastName)
+                        SELECT TOP 1 @ID = Id FROM @TempCustomerTable
                     ";
+
+                    SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
+                    outputParam.Direction = ParameterDirection.Output;
+
                     cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
                     cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
 
-                    customer.Id = (int)await cmd.ExecuteScalarAsync();
+                    cmd.ExecuteNonQuery();
 
-                    return CreatedAtRoute("GetCustomer", new { id = customer.Id }, customer);
+                    var newCustomerId = (int)outputParam.Value;
+                    customer.Id = newCustomerId;
+
+                    return Ok(customer);
                 }
             }
         }
@@ -299,11 +307,11 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE Customer
-                            SET FirstName = @firstName
+                            SET FirstName = @firstName,
                                 LastName = @lastName
                             WHERE Id = @id
                         ";
-                        cmd.Parameters.Add(new SqlParameter("@id", customer.Id));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@firstName", customer.FirstName));
                         cmd.Parameters.Add(new SqlParameter("@lastName", customer.LastName));
 
@@ -311,10 +319,13 @@ namespace BangazonAPI.Controllers
 
                         if (rowsAffected > 0)
                         {
+                            return Ok();
+                        }
+                        else
+                        {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
-
-                        throw new Exception("No rows affected");
+                        throw new Exception("No update made to customer.");
                     }
                 }
             }
@@ -347,9 +358,14 @@ namespace BangazonAPI.Controllers
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
                         {
-                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                            return Ok();
                         }
-                        throw new Exception("No rows affected");
+                        else
+                        {
+                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+
+                        }
+                        throw new Exception("No rows were deleted from customers.");
                     }
                 }
             }
