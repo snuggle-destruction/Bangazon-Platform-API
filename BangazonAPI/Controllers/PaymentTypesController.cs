@@ -106,11 +106,11 @@ namespace BangazonAPI.Controllers
                 {
                     cmd.CommandText = @"DECLARE @PaymentTypeTemp Table(Id int);
 
-                        INSERT INTO PaymentType (AcctNumber, [Name], CustomerId)
-                        OUTPUT INSERTED.Id INTO @PaymentTypeTemp(Id)
-                        VALUES (@acctNumber, @name, @customerId)
+                                        INSERT INTO PaymentType (AcctNumber, [Name], CustomerId)
+                                        OUTPUT INSERTED.Id INTO @PaymentTypeTemp(Id)
+                                        VALUES (@acctNumber, @name, @customerId)
 
-                        SELECT TOP 1 @ID = Id FROM @PaymentTypeTemp";
+                                        SELECT TOP 1 @ID = Id FROM @PaymentTypeTemp";
 
                     SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
                     outputParam.Direction = ParameterDirection.Output;
@@ -191,7 +191,11 @@ namespace BangazonAPI.Controllers
                     conn.Open();
                     using (SqlCommand cmd = conn.CreateCommand())
                     {
-                        cmd.CommandText = @"DELETE FROM PaymentType WHERE Id = @id";
+                        cmd.CommandText = @"UPDATE [Order]
+                                            SET PaymentTypeId = NULL
+                                            WHERE PaymentTypeId = @id;
+
+                                            DELETE FROM PaymentType WHERE Id = @id;";
                         cmd.Parameters.Add(new SqlParameter("@id", id));
 
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
@@ -201,9 +205,9 @@ namespace BangazonAPI.Controllers
                         }
                         else
                         {
-                            return new StatusCodeResult(StatusCodes.Status204NoContent);
+                            throw new Exception("No rows affected");
                         }
-                        throw new Exception("No rows affected");
+                        
                     }
                 }
             }
