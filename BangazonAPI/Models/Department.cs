@@ -18,10 +18,14 @@ namespace BangazonAPI.Models
         [Required]
         public int Budget { get; set; }
 
+<<<<<<< HEAD
         public List<Employee> employeeList
         {
             get { return _employeeList; }
             set { _employeeList = value; }
         }
+=======
+        public List<Employee> Employees = new List<Employee>();
+>>>>>>> master
     }
 }
