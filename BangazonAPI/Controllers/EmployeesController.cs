@@ -42,10 +42,14 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
 
-                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.IsSupervisor, e.DepartmentId, d.Name
+                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.IsSupervisor, d.Name as Department, co.Make, co.Manufacturer
                                         FROM Employee e
                                         JOIN Department d
-                                        ON e.DepartmentId = d.Id";
+                                        ON e.DepartmentId = d.Id
+                                        JOIN ComputerEmployee ce
+                                        ON e.Id = ce.EmployeeId
+                                        Join Computer co
+                                        ON ce.ComputerId = co.Id";
 
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
@@ -58,8 +62,9 @@ namespace BangazonAPI.Controllers
                         var FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
                         var LastName = reader.GetString(reader.GetOrdinal("LastName"));
                         var IsSupervisor = reader.GetBoolean(reader.GetOrdinal("IsSupervisor"));
-                        var DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId"));
-                        var Name = reader.GetString(reader.GetOrdinal("Name"));
+                        var Department = reader.GetString(reader.GetOrdinal("Department"));
+                        var Make = reader.GetString(reader.GetOrdinal("Make"));
+                        var Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"));
 
                         Employee employee = new Employee
                         {
@@ -67,8 +72,8 @@ namespace BangazonAPI.Controllers
                             FirstName = FirstName,
                             LastName = LastName,
                             IsSupervisor = IsSupervisor,
-                            DepartmentId = DepartmentId,
-                            department = new Department { Name = reader.GetString(reader.GetOrdinal("Name"))}
+                            department = new Department { Name = Department },
+                            computer = new Computer { Make = Make, Manufacturer = Manufacturer }
                         };
 
                         employeesList.Add(employee);
