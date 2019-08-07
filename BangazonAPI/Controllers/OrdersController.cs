@@ -198,17 +198,18 @@ namespace BangazonAPI.Controllers
                             {
                                 customer = null;
                             };
+                            order.Customers.Add(customer);
 
                             if (orders.Any(o => o.Id == order.Id))
                             {
                                 Order existingOrder = orders.Find(o => o.Id == order.Id);
                                 existingOrder.Products.Add(product);
-                                existingOrder.Customers.Add(customer);
+                                //existingOrder.Customers.Add(customer);
                             }
                             else
                             {
                                 order.Products.Add(product);
-                                order.Customers.Add(customer);
+                                //order.Customers.Add(customer);
                                 orders.Add(order);
                             }
                         }
@@ -241,16 +242,17 @@ namespace BangazonAPI.Controllers
                             {
                                 customer = null;
                             };
+                            order.Customers.Add(customer);
 
                             if (orders.Any(o => o.Id == order.Id))
                             {
                                 Order existingOrder = orders.Find(o => o.Id == order.Id);
-                                existingOrder.Customers.Add(customer);
+                                //existingOrder.Customers.Add(customer);
                                 existingOrder.Products.Add(product);
                             }
                             else
                             {
-                                order.Customers.Add(customer);
+                                //order.Customers.Add(customer);
                                 order.Products.Add(product);
                                 orders.Add(order);
                             }
