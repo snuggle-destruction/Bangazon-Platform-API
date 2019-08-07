@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
@@ -31,30 +32,66 @@ namespace BangazonAPI.Controllers
 
         // GET api/values
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] string completed)
         {
+            string SqlCommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees, e.FirstName, e.LastName FROM TrainingProgram tp
+                                        JOIN EmployeeTraining et ON et.TrainingProgramId = tp.id
+                                        JOIN Employee e ON e.Id = et.EmployeeId;";
+            if (completed == "false")
+            {
+                SqlCommandText = @"SELECT tp.Id, tp.[Name], tp.StartDate, tp.EndDate, tp.MaxAttendees, e.FirstName, e.LastName FROM TrainingProgram tp
+                                        JOIN EmployeeTraining et ON et.TrainingProgramId = tp.id
+                                        JOIN Employee e ON e.Id = et.EmployeeId
+                                        WHERE tp.EndDate > CURRENT_TIMESTAMP;";
+            }
             using (SqlConnection conn = Connection)
             {
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    cmd.CommandText = "SELECT TrainingProgram.Id, [Name], StartDate, EndDate, MaxAttendees FROM TrainingProgram";
+                    cmd.CommandText = SqlCommandText;
+
                     SqlDataReader reader = await cmd.ExecuteReaderAsync();
 
                     List<TrainingProgram> trainingPrograms = new List<TrainingProgram>();
                     while (reader.Read())
                     {
-                        TrainingProgram trainingProgram = new TrainingProgram
+
+                        int Id = reader.GetInt32(reader.GetOrdinal("Id"));
+                        string Name = reader.GetString(reader.GetOrdinal("Name"));
+                        DateTime StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate"));
+                        DateTime EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate"));
+                        int MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"));
+                        string FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
+                        string LastName = reader.GetString(reader.GetOrdinal("LastName"));
+                        // You might have more columns
+
+                        Employee employee = new Employee()
                         {
-                            Id = reader.GetInt32(reader.GetOrdinal("Id")),
-                            Name = reader.GetString(reader.GetOrdinal("Name")),
-                            StartDate = reader.GetDateTime(reader.GetOrdinal("StartDate")),
-                            EndDate = reader.GetDateTime(reader.GetOrdinal("EndDate")),
-                            MaxAttendees = reader.GetInt32(reader.GetOrdinal("MaxAttendees"))
-                            // You might have more columns
+                            FirstName = FirstName,
+                            LastName = LastName
                         };
 
-                        trainingPrograms.Add(trainingProgram);
+                        if(!trainingPrograms.Any(tp => tp.Id == Id))
+                        {
+                            TrainingProgram trainingProgram = new TrainingProgram()
+                            {
+                                Id = Id,
+                                Name = Name,
+                                StartDate = StartDate,
+                                EndDate = EndDate,
+                                MaxAttendees = MaxAttendees,
+                                AttendingEmployees = new List<Employee>()
+                            };
+
+                            trainingProgram.AttendingEmployees.Add(employee);
+                            trainingPrograms.Add(trainingProgram);
+                        }
+                        else
+                        {
+                            var findProgram = trainingPrograms.Find(tp => tp.Id == Id);
+                            findProgram.AttendingEmployees.Add(employee);
+                        }
                     }
 
                     reader.Close();
@@ -112,18 +149,29 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
                     // More string interpolation
-                    cmd.CommandText = @"INSERT INTO Department (Name, StartDate, EndDate, MaxAttendees)
-                                        OUTPUT INSERTED.Id
-                                        VALUES (@name, @startDate, @endDate, maxAttendees)";
+                    cmd.CommandText = @"DECLARE @TrainingProgramTemp Table(Id int);
+
+                                        INSERT INTO TrainingProgram ([Name], StartDate, EndDate, MaxAttendees)
+                                        OUTPUT INSERTED.Id INTO @TrainingProgramTemp(Id)
+                                        VALUES (@name, @startDate, @endDate, @maxAttendees)
+
+                                        SELECT TOP 1 @ID = Id from @TrainingProgramTemp";
+
+                    SqlParameter outputParam = cmd.Parameters.Add("@ID", SqlDbType.Int);
+                    outputParam.Direction = ParameterDirection.Output;
+
                     cmd.Parameters.Add(new SqlParameter("@name", trainingProgram.Name));
                     cmd.Parameters.Add(new SqlParameter("@startDate", trainingProgram.StartDate));
                     cmd.Parameters.Add(new SqlParameter("@endDate", trainingProgram.EndDate));
                     cmd.Parameters.Add(new SqlParameter("@maxAttendees", trainingProgram.MaxAttendees));
 
 
-                    trainingProgram.Id = (int)await cmd.ExecuteScalarAsync();
+                    cmd.ExecuteNonQuery();
 
-                    return CreatedAtRoute("GetCustomer", new { id = trainingProgram.Id }, trainingProgram);
+                    var newTrainingProgramId = (int)outputParam.Value;
+                    trainingProgram.Id = newTrainingProgramId;
+
+                    return Ok(trainingProgram);
                 }
             }
         }
@@ -141,22 +189,25 @@ namespace BangazonAPI.Controllers
                     {
                         cmd.CommandText = @"
                             UPDATE TrainingProgram
-                            SET Name = @name
-                                StartDate = @startDate
-                                EndDate = @endDate
+                            SET [Name] = @name,
+                                StartDate = @startDate,
+                                EndDate = @endDate,
                                 MaxAttendees = @maxAttendees
-                            WHERE Id = @id
+                                WHERE Id = @id
                         ";
-                        cmd.Parameters.Add(new SqlParameter("@id", trainingProgram.Id));
+                        cmd.Parameters.Add(new SqlParameter("@id", id));
                         cmd.Parameters.Add(new SqlParameter("@name", trainingProgram.Name));
                         cmd.Parameters.Add(new SqlParameter("@startDate", trainingProgram.StartDate));
                         cmd.Parameters.Add(new SqlParameter("@endDate", trainingProgram.EndDate));
                         cmd.Parameters.Add(new SqlParameter("@maxAttendees", trainingProgram.MaxAttendees));
 
-
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
 
                         if (rowsAffected > 0)
+                        {
+                            return Ok();
+                        }
+                        else
                         {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
@@ -165,7 +216,7 @@ namespace BangazonAPI.Controllers
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 if (!TrainingProgramExists(id))
                 {
@@ -195,13 +246,17 @@ namespace BangazonAPI.Controllers
                         int rowsAffected = await cmd.ExecuteNonQueryAsync();
                         if (rowsAffected > 0)
                         {
+                            return Ok();
+                        }
+                        else
+                        {
                             return new StatusCodeResult(StatusCodes.Status204NoContent);
                         }
-                        throw new Exception("No rows affected");
+                        throw new Exception("no rows affected");
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 if (!TrainingProgramExists(id))
                 {
