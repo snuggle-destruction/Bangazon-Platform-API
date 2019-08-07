@@ -352,3 +352,7 @@ obj
 .DS_Store
 .vs
 node_modules
+
+appsettings.Development.json
+appsettings.Testing.json
+appsettings.json
