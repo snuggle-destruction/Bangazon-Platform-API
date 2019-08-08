@@ -34,13 +34,13 @@ namespace BangazonAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] string q, string _include, string active)
         {
-
+            // Default query to return only customers
             string SqlCommandText = @"
                         SELECT c.Id as CustomerId, c.FirstName, c.LastName,
                                o.Id as OrderId, o.CustomerId, o.PaymentTypeId
                         FROM Customer c
                         LEFT JOIN [Order] o on o.CustomerId = c.Id";
-
+            // Query includes all associated products nested in customers
             if (_include == "products")
             {
                 SqlCommandText = @"
@@ -51,6 +51,7 @@ namespace BangazonAPI.Controllers
                     LEFT JOIN Product p ON c.Id = p.CustomerId
                     LEFT JOIN [Order] o ON o.CustomerId = c.Id";
             }
+            // Query includes all associated payment types nested in customers
             else if (_include == "payments")
             {
                 SqlCommandText = @"
@@ -61,6 +62,7 @@ namespace BangazonAPI.Controllers
                      LEFT JOIN PaymentType p ON c.Id = p.CustomerId
                      LEFT JOIN [Order] o ON o.CustomerId = c.Id";
             }
+            // Query returns customers that have not placed an order
             else if (active == "false")
             {
                 SqlCommandText = @"
@@ -69,7 +71,7 @@ namespace BangazonAPI.Controllers
                     LEFT JOIN [Order] o on o.CustomerId = c.Id
                     WHERE o.Id IS NULL";
             }
-
+            // Query searches for any customer with first or last name like 'q'
             if (q != null)
             {
                 SqlCommandText = $@"{SqlCommandText} WHERE (
@@ -87,12 +89,15 @@ namespace BangazonAPI.Controllers
                 {
                     cmd.CommandText = SqlCommandText;
 
+                    // Adds Sql Parameter for q search if q is not null
                     if (q != null)
                     {
                         cmd.Parameters.Add(new SqlParameter("@q", $"%{q}%"));
                     }
 
                     SqlDataReader reader = cmd.ExecuteReader();
+
+                    //Instantiates a list of customers
                     List<Customer> customers = new List<Customer>();
 
                     while (reader.Read())
@@ -106,12 +111,13 @@ namespace BangazonAPI.Controllers
                             PaymentTypes = new List<PaymentType>(),
                             IsActive = false
                         };
+                        // If customer has an associated order, IsActive is set to true
                         if (!reader.IsDBNull(reader.GetOrdinal("OrderId")))
                         {
                             customer.IsActive = true;
                         }
                         
-
+                        // If include query = products, builds product object
                         if (_include == "products")
                         {
                             Product product = new Product();
@@ -129,7 +135,7 @@ namespace BangazonAPI.Controllers
                             {
                                 product = null;
                             };
-
+                            // Checks if customer has already been added to the list and if so product is added to existing customer object
                             if (customers.Any(c => c.Id == customer.Id))
                             {
                                 Customer existingCustomer = customers.Find(c => c.Id == customer.Id);
@@ -141,6 +147,7 @@ namespace BangazonAPI.Controllers
                                 customers.Add(customer);
                             }
                         }
+                        // If include query = payments, builds payment type object
                         else if (_include == "payments")
                         {
                             PaymentType paymentType = new PaymentType();
@@ -155,7 +162,7 @@ namespace BangazonAPI.Controllers
                             {
                                 paymentType = null;
                             };
-
+                            // Checks if customer has already been added to the list and if so payment type is added to existing customer object
                             if (customers.Any(c => c.Id == customer.Id))
                             {
                                 Customer existingCustomer = customers.Find(c => c.Id == customer.Id);
@@ -203,7 +210,7 @@ namespace BangazonAPI.Controllers
         public IActionResult Get([FromRoute] int id, string _include)
         {
             string SqlCommandText;
-
+            // Query includes all associated products nested in customers
             if (_include == "products")
             {
                 SqlCommandText = @"
@@ -212,6 +219,7 @@ namespace BangazonAPI.Controllers
                     FROM Customer c
                     LEFT JOIN Product p ON c.Id = p.CustomerId";
             }
+            // Query includes all associated payment types nested in customers
             else if (_include == "payments")
             {
                 SqlCommandText = @"
