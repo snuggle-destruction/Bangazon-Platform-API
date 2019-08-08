@@ -210,7 +210,7 @@ namespace BangazonAPI.Controllers
         public IActionResult Get([FromRoute] int id, string _include)
         {
             string SqlCommandText;
-
+            // Query includes all associated products nested in customers
             if (_include == "products")
             {
                 SqlCommandText = @"
@@ -219,6 +219,7 @@ namespace BangazonAPI.Controllers
                     FROM Customer c
                     LEFT JOIN Product p ON c.Id = p.CustomerId";
             }
+            // Query includes all associated payment types nested in customers
             else if (_include == "payments")
             {
                 SqlCommandText = @"
