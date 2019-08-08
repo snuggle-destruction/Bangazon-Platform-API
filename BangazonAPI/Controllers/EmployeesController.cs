@@ -42,7 +42,7 @@ namespace BangazonAPI.Controllers
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
 
-                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.IsSupervisor, d.Name as Department, co.Make, co.Manufacturer
+                    cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.IsSupervisor, d.Name as Department, d.Id as DepartmentId, co.Make, co.Manufacturer
                                         FROM Employee e
                                         JOIN Department d
                                         ON e.DepartmentId = d.Id
@@ -65,6 +65,7 @@ namespace BangazonAPI.Controllers
                         var Department = reader.GetString(reader.GetOrdinal("Department"));
                         var Make = reader.GetString(reader.GetOrdinal("Make"));
                         var Manufacturer = reader.GetString(reader.GetOrdinal("Manufacturer"));
+                        var DepartmentId = reader.GetInt32(reader.GetOrdinal("DepartmentId"));
 
                         Employee employee = new Employee
                         {
@@ -72,7 +73,8 @@ namespace BangazonAPI.Controllers
                             FirstName = FirstName,
                             LastName = LastName,
                             IsSupervisor = IsSupervisor,
-                            department = new Department { Name = Department },
+                            DepartmentId = DepartmentId,
+                            department = new Department { Name = Department, Id= DepartmentId},
                             computer = new Computer { Make = Make, Manufacturer = Manufacturer }
                         };
 
