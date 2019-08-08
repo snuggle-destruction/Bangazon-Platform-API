@@ -34,10 +34,11 @@ namespace BangazonAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] string _include, [FromQuery] string completed)
         {
+            // Default query that returns Order information
             string SqlCommandText = @"
                         SELECT o.Id as OrderId, o.CustomerId, o.PaymentTypeId                
                         FROM [Order] o";
-
+            // Query includes all products associated with the order
             if (_include == "products")
             {
                 SqlCommandText = @"
@@ -48,6 +49,7 @@ namespace BangazonAPI.Controllers
                     LEFT JOIN OrderProduct op on o.Id = op.OrderId
                     LEFT JOIN Product p ON op.ProductId = p.Id";
             }
+            // Query includes the customer who placed the order
             else if (_include == "customers")
             {
                 SqlCommandText = @"
@@ -56,6 +58,7 @@ namespace BangazonAPI.Controllers
                      FROM [Order] o
                      LEFT JOIN Customer c ON c.Id = o.CustomerId";
             }
+            // Query returns all orders that have been completed
             else if (completed == "true")
             {
                 SqlCommandText = @"
@@ -69,6 +72,7 @@ namespace BangazonAPI.Controllers
                     LEFT JOIN Customer c ON o.CustomerId = c.Id
                     WHERE o.PaymentTypeId IS NOT NULL";
             }
+            // Query returns all orders that have not been completed
             else if (completed == "false")
             {
                 SqlCommandText = @"
@@ -92,6 +96,7 @@ namespace BangazonAPI.Controllers
 
                     SqlDataReader reader = cmd.ExecuteReader();
 
+                    // Instantiates a new list of orders
                     List<Order> orders = new List<Order>();
 
                     while (reader.Read())
@@ -105,6 +110,7 @@ namespace BangazonAPI.Controllers
                             Customers = new List<Customer>()
                             
                         };
+                        // If Payment Type Id is null, order is marked as not completed, otherwise value is set from query
                         if (!reader.IsDBNull(reader.GetOrdinal("PaymentTypeId")))
                         {
                             order.PaymentTypeId = reader.GetInt32(reader.GetOrdinal("PaymentTypeId"));
@@ -113,8 +119,8 @@ namespace BangazonAPI.Controllers
                         {
                             order.Completed = false;
                         };                       
-                        //orders.Add(order);
 
+                        // If query include = products, product object is instantiated
                         if (_include == "products")
                         {
                             Product product = new Product();
@@ -132,12 +138,13 @@ namespace BangazonAPI.Controllers
                             {
                                 product = null;
                             };
-
+                            // Checks if order has already been created, if so product is added to existing order
                             if (orders.Any(o => o.Id == order.Id))
                             {
                                 Order existingOrder = orders.Find(o => o.Id == order.Id);
                                 existingOrder.Products.Add(product);
                             }
+                            // Else new order is added to list
                             else
                             {
                                 order.Products.Add(product);
@@ -204,12 +211,10 @@ namespace BangazonAPI.Controllers
                             {
                                 Order existingOrder = orders.Find(o => o.Id == order.Id);
                                 existingOrder.Products.Add(product);
-                                //existingOrder.Customers.Add(customer);
                             }
                             else
                             {
                                 order.Products.Add(product);
-                                //order.Customers.Add(customer);
                                 orders.Add(order);
                             }
                         }
@@ -247,12 +252,10 @@ namespace BangazonAPI.Controllers
                             if (orders.Any(o => o.Id == order.Id))
                             {
                                 Order existingOrder = orders.Find(o => o.Id == order.Id);
-                                //existingOrder.Customers.Add(customer);
                                 existingOrder.Products.Add(product);
                             }
                             else
                             {
-                                //order.Customers.Add(customer);
                                 order.Products.Add(product);
                                 orders.Add(order);
                             }
@@ -330,10 +333,6 @@ namespace BangazonAPI.Controllers
 
                     cmd.Parameters.Add(new SqlParameter("@customerId", order.CustomerId));
                     cmd.Parameters.Add(new SqlParameter("@paymentTypeId", order.PaymentTypeId));
-
-                    //order.Id = (int)await cmd.ExecuteScalarAsync();
-
-                    //return CreatedAtRoute("GetOrder", new { id = order.Id }, order);
 
                     cmd.ExecuteNonQuery();
 
@@ -442,7 +441,6 @@ namespace BangazonAPI.Controllers
                 conn.Open();
                 using (SqlCommand cmd = conn.CreateCommand())
                 {
-                    // More string interpolation
                     cmd.CommandText = "SELECT Id FROM [Order] WHERE Id = @id";
                     cmd.Parameters.Add(new SqlParameter("@id", id));
 
